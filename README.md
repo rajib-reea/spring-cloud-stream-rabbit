@@ -1,7 +1,7 @@
 # spring-cloud-stream-rabbit
 ## Run RabbitMQ
 ```
-use run-instruction.txt for running rabbitmq cluster.
+use run-instruction.txt infra-code/rabbit-mq for running rabbitmq cluster.
 ```
 ## Metrics
 Message sent count is available at the following endpoints
