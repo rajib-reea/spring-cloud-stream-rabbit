@@ -1,0 +1,47 @@
+spring:
+  cloud:
+    function:
+      definition: source;sink
+    stream:
+      bindings:
+        source-out-0:
+          destination: demo-topic
+          #content-type: application/json
+        sink-in-0:
+          destination: demo-topic
+          #content-type: application/json
+      poller:
+        fixed-delay: 1000
+      default:
+        error-handler-definition: myErrorHandler
+      rabbit:
+        default:
+          producer:
+            deadLetterQueueName: dlq_producer
+            deadLetterExchange: dlx_producer
+            #maxAttempts: 1
+            maxLength: 5
+            auto-bind-dlq: true
+            #overflowBehavior: reject-publish
+          consumer:
+            deadLetterQueueName: dlq_consumer
+            deadLetterExchange: dlx_consumer
+            #maxAttempts: 1
+            maxLength: 5
+            auto-bind-dlq: true
+            #overflowBehavior: reject-publish
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,metrics,prometheus"
+  endpoint:
+    health:
+      show-details: always

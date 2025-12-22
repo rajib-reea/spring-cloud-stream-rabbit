@@ -1,0 +1,27 @@
+0. Install Docker Compose and JDK 21
+1. Issue command- docker compose up
+2. Open in browser http://localhost:15672
+3. ID/Pass: admin/admin
+
+[Install SDKMan in Ubuntu]
+sudo apt update
+sudo apt install zip unzip -y
+curl -s "https://get.sdkman.io" | bash
+sdk version
+
+//Set $JAVA_HOME
+echo 'export SDKMAN_DIR="$HOME/.sdkman"' >> ~/.bashrc
+echo '[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"' >> ~/.bashrc
+source ~/.bashrc
+echo $JAVA_HOME
+
+//Install 2 different Java versions
+sdk list java
+sdk install java 25.0.1-amzn
+sdk current java
+//the following lines shows something extraordinary- the sdkman java has taken precedence over system java(previously installed)
+which java
+/home/rajib/.sdkman/candidates/java/current/bin/java
+sdk install java 21.0.9-amzn
+sdk default java 21.0.9-amzn
+sdk current java

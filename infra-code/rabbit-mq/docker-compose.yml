@@ -1,0 +1,80 @@
+networks:
+  rabbitmq-net:
+    driver: bridge
+
+services:
+  haproxy:
+    image: haproxy:2.9
+    container_name: rabbitmq-lb
+    networks:
+      - rabbitmq-net
+    ports:
+      - "5672:5672"     # AMQP (clients connect here)
+      - "15672:15672"   # Management UI
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - rabbitmq1
+      - rabbitmq2
+      - rabbitmq3
+
+  rabbitmq1:
+    image: rabbitmq:3.13-management
+    hostname: rabbitmq1
+    container_name: rabbitmq1
+    networks:
+      - rabbitmq-net
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SUPER_SECRET_COOKIE"
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq1-data:/var/lib/rabbitmq
+
+  rabbitmq2:
+    image: rabbitmq:3.13-management
+    hostname: rabbitmq2
+    container_name: rabbitmq2
+    networks:
+      - rabbitmq-net
+    depends_on:
+      - rabbitmq1
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SUPER_SECRET_COOKIE"
+    volumes:
+      - rabbitmq2-data:/var/lib/rabbitmq
+    command: >
+      bash -c "
+      rabbitmq-server -detached &&
+      rabbitmqctl stop_app &&
+      rabbitmqctl join_cluster rabbit@rabbitmq1 &&
+      rabbitmqctl start_app &&
+      tail -f /var/log/rabbitmq/*.log
+      "
+
+  rabbitmq3:
+    image: rabbitmq:3.13-management
+    hostname: rabbitmq3
+    container_name: rabbitmq3
+    networks:
+      - rabbitmq-net
+    depends_on:
+      - rabbitmq1
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SUPER_SECRET_COOKIE"
+    volumes:
+      - rabbitmq3-data:/var/lib/rabbitmq
+    command: >
+      bash -c "
+      rabbitmq-server -detached &&
+      rabbitmqctl stop_app &&
+      rabbitmqctl join_cluster rabbit@rabbitmq1 &&
+      rabbitmqctl start_app &&
+      tail -f /var/log/rabbitmq/*.log
+      "
+
+volumes:
+  rabbitmq1-data:
+  rabbitmq2-data:
+  rabbitmq3-data:
+
