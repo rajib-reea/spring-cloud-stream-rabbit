@@ -71,4 +71,5 @@ The application defines a custom error handler:
 public Consumer<ErrorMessage> myErrorHandler() {
     return error -> log.error("App in error {}", error.getOriginalMessage());
 }
+```
 Spring Cloud Stream automatically routes message-processing errors to this handler using its internal error channels.
