@@ -1,16 +1,4 @@
-# spring-cloud-stream-rabbit
-## Run RabbitMQ
-```
-use run-instruction.txt infra-code/rabbit-mq for running rabbitmq cluster.
-```
-## Metrics
-Message sent count is available at the following endpoints
-```bash
-http://localhost:8080/actuator/prometheus
-http://localhost:8080/actuator/metrics/messages.sent.direct
-```
-
-# Spring Cloud Stream – RabbitMQ Demo
+# Spring Cloud Stream – RabbitMQ
 
 This project demonstrates the use of **Spring Cloud Stream** with **RabbitMQ** using the **functional programming model** (`Supplier` / `Consumer`).
 
@@ -73,3 +61,13 @@ public Consumer<ErrorMessage> myErrorHandler() {
 }
 ```
 Spring Cloud Stream automatically routes message-processing errors to this handler using its internal error channels.
+## Run RabbitMQ
+```
+use run-instruction.txt infra-code/rabbit-mq for running rabbitmq cluster.
+```
+## Metrics
+Message sent count is available at the following endpoints
+```bash
+http://localhost:8080/actuator/prometheus
+http://localhost:8080/actuator/metrics/messages.sent.direct
+```
