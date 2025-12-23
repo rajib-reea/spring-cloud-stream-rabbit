@@ -4,6 +4,8 @@ This project demonstrates the use of **Spring Cloud Stream** with **RabbitMQ** u
 
 The application produces and consumes messages without using any broker-specific APIs, keeping the code clean, decoupled, and transport-agnostic.
 
+Just we need to keep in mind that the Spring Cloud Stream is configuration oriented and therefore this is not a good approach to replace application properties by a configuration class.
+
 ---
 
 ## Overview
