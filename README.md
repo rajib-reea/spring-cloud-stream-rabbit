@@ -83,9 +83,9 @@ Example Payload
 }
 
 ````
-## Loss Prevention / Duplicate Avoidance
+## Loss Prevention / Duplicate Avoidance(not implemented)
 
-We need Outbox on the Producer side and Inbox on the Consumer side(not implemented).
+We need Outbox on the Producer side and Inbox on the Consumer side.
 ````
 1. Outbox:
 
