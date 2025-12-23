@@ -156,3 +156,108 @@ Consumer logic is read-only
 Side effects are idempotent by nature
 
 Duplicates are harmless
+
+## ISO-8583 Flow Summary
+
+````
+ISO-8583 Request
+      ↓
+RabbitMQ
+      ↓
+Core Banking Consumer
+      ↓
+┌──────────────┬──────────────────┐
+│ ISO Code     │ Action           │
+├──────────────┼──────────────────┤
+│ 00           │ ACK              │
+│ 05 / 51 / 55 │ DLQ              │
+│ 91 / 96      │ Retry → DLQ      │
+└──────────────┴──────────────────┘
+
+✅ SUCCESS
+
+| ISO Code | Meaning  | Category | RabbitMQ Action | Retry |
+| -------- | -------- | -------- | --------------- | ----- |
+| **00**   | Approved | SUCCESS  | ACK             | ❌ No  |
+
+❌ CLIENT / VALIDATION ERRORS (NON-RETRYABLE)
+
+These indicate bad request / customer / card data
+Never retry – send directly to DLQ
+
+| ISO Code | Meaning                       | Category   | RabbitMQ Action | Retry |
+| -------- | ----------------------------- | ---------- | --------------- | ----- |
+| **05**   | Do not honor                  | Business   | DLQ             | ❌ No  |
+| **12**   | Invalid transaction           | Validation | DLQ             | ❌ No  |
+| **13**   | Invalid amount                | Validation | DLQ             | ❌ No  |
+| **14**   | Invalid card number           | Validation | DLQ             | ❌ No  |
+| **30**   | Format error                  | Validation | DLQ             | ❌ No  |
+| **41**   | Lost card                     | Security   | DLQ             | ❌ No  |
+| **43**   | Stolen card                   | Security   | DLQ             | ❌ No  |
+| **54**   | Expired card                  | Validation | DLQ             | ❌ No  |
+| **55**   | Incorrect PIN                 | Security   | DLQ             | ❌ No  |
+| **57**   | Transaction not permitted     | Business   | DLQ             | ❌ No  |
+| **58**   | Txn not permitted on terminal | Business   | DLQ             | ❌ No  |
+
+💰 FINANCIAL / BUSINESS RULE ERRORS (NON-RETRYABLE)
+
+Transaction is valid, but business rules reject it
+Never retry
+
+| ISO Code | Meaning                  | Category  | RabbitMQ Action | Retry |
+| -------- | ------------------------ | --------- | --------------- | ----- |
+| **51**   | Insufficient funds       | Financial | DLQ             | ❌ No  |
+| **61**   | Exceeds withdrawal limit | Financial | DLQ             | ❌ No  |
+| **62**   | Restricted card          | Financial | DLQ             | ❌ No  |
+| **65**   | Exceeds frequency limit  | Financial | DLQ             | ❌ No  |
+
+🔒 SECURITY / FRAUD ERRORS (NON-RETRYABLE)
+
+Hard stops, security violations
+
+| ISO Code | Meaning            | Category | RabbitMQ Action | Retry |
+| -------- | ------------------ | -------- | --------------- | ----- |
+| **59**   | Suspected fraud    | Security | DLQ             | ❌ No  |
+| **63**   | Security violation | Security | DLQ             | ❌ No  |
+| **75**   | PIN tries exceeded | Security | DLQ             | ❌ No  |
+
+⚠️ DEFAULT / FALLBACK
+
+| ISO Code | Meaning            | Category | RabbitMQ Action | Retry |
+| -------- | ------------------ | -------- | --------------- | ----- |
+| **96**   | System malfunction | System   | Retry → DLQ     | ✅ Yes |
+
+Map<String, HandlingPolicy> ISO_ERROR_POLICY = Map.ofEntries(
+    // Success
+    entry("00", HandlingPolicy.ACK),
+
+    // Non-retryable
+    entry("05", HandlingPolicy.DLQ),
+    entry("12", HandlingPolicy.DLQ),
+    entry("13", HandlingPolicy.DLQ),
+    entry("14", HandlingPolicy.DLQ),
+    entry("30", HandlingPolicy.DLQ),
+    entry("41", HandlingPolicy.DLQ),
+    entry("43", HandlingPolicy.DLQ),
+    entry("51", HandlingPolicy.DLQ),
+    entry("54", HandlingPolicy.DLQ),
+    entry("55", HandlingPolicy.DLQ),
+    entry("57", HandlingPolicy.DLQ),
+    entry("58", HandlingPolicy.DLQ),
+    entry("61", HandlingPolicy.DLQ),
+    entry("62", HandlingPolicy.DLQ),
+    entry("65", HandlingPolicy.DLQ),
+    entry("59", HandlingPolicy.DLQ),
+    entry("63", HandlingPolicy.DLQ),
+    entry("75", HandlingPolicy.DLQ),
+
+    // Retryable
+    entry("68", HandlingPolicy.RETRY),
+    entry("91", HandlingPolicy.RETRY),
+    entry("92", HandlingPolicy.RETRY),
+    entry("94", HandlingPolicy.RETRY),
+    entry("96", HandlingPolicy.RETRY_THEN_DLQ)
+);
+
+
+````
