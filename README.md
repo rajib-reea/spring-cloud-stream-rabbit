@@ -157,7 +157,7 @@ Side effects are idempotent by nature
 
 Duplicates are harmless
 
-## ISO-8583 Flow Summary
+## ISO-8583 Flow Summary(not implemented)
 
 ````
 ISO-8583 Request
