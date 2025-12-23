@@ -71,3 +71,87 @@ Message sent count is available at the following endpoints
 http://localhost:8080/actuator/prometheus
 http://localhost:8080/actuator/metrics/messages.sent.direct
 ```
+
+````
+Example Payload
+{
+  "txId": "TX123",
+  "customerId": "C456",
+  "type": "SMS",
+  "message": "BDT 5000 credited",
+  "timestamp": "2025-01-22T10:30:00Z"
+}
+
+````
+
+We need Outbox on the Producer side and Inbox on the Consumer side(not implemented).
+````
+1. Outbox:
+
+CREATE TABLE outbox (
+  id UUID PRIMARY KEY,
+  aggregate_type VARCHAR(50),
+  aggregate_id VARCHAR(50),
+  event_type VARCHAR(50),
+  payload JSONB,
+  status VARCHAR(20), -- NEW, SENT, FAILED
+  created_at TIMESTAMP
+);
+
+@Transactional
+public void handle(Message msg) {
+    updateAccount();
+    saveOutboxEvent(msg);
+}
+
+@Scheduled(fixedDelay = 1000)
+public void publishOutbox() {
+    List<OutboxEvent> events = repo.findUnsent();
+    for (var e : events) {
+        rabbitTemplate.convertAndSend(...);
+        e.markSent();
+    }
+}
+
+2. Inbox:
+
+CREATE TABLE inbox (
+  message_id VARCHAR(100) PRIMARY KEY,
+  received_at TIMESTAMP
+);
+
+@Transactional
+public void consume(Message<?> message) {
+
+    String messageId = message.getHeaders()
+                              .getId()
+                              .toString();
+
+    if (inboxRepository.existsById(messageId)) {
+        // Already processed → safe to ACK
+        return;
+    }
+
+    // 1️⃣ Business logic
+    processBusiness(message.getPayload());
+
+    // 2️⃣ Mark as processed
+    inboxRepository.save(new InboxMessage(messageId));
+}
+
+````
+❌ Skip Outbox if:
+
+You don’t care if message is lost
+
+You produce events after commit manually
+
+You accept inconsistency
+
+❌ Skip Inbox if:
+
+Consumer logic is read-only
+
+Side effects are idempotent by nature
+
+Duplicates are harmless
