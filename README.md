@@ -83,6 +83,7 @@ Example Payload
 }
 
 ````
+## Loss Prevention / Duplicate Avoidance
 
 We need Outbox on the Producer side and Inbox on the Consumer side(not implemented).
 ````
